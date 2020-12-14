@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ULO ULOAN</title>
+    <link rel="icon" href="images.png">
+  </head>
+
+  <body>
+
+    <div id="score">0</div>
+    <canvas id="uloboard" width="400" height="400"></canvas>
+    <h1 id="judul">DULINAN ULO ULOAN</h1>
+    <h3>
+      MAIN HAVE FUN AJA, GAUSA BAPER
+    </h3>
+    <div class="jenengku">v.1.0<br>Indra Kurniawan</div>
+
+    <style>
+      #uloboard {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      #score {
+        position: absolute;
+        top: 85%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 50px;
+      }
+      #judul {
+        position: absolute;
+        bottom: 75%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .jenengku{
+  		  position: absolute;
+  			font-size: 10px;
+  			color: black;
+  			bottom: 0px;
+  			right: 0px;
+  			opacity: 0.5;
+  		}
+    </style>
+  </body>
+
+  <script>
+    const board_border = 'black';
+    const board_background = "white";
+    const ulo_col = 'pink';
+    const ulo_border = 'darkblue';
+    
+    let ulo = [
+      {x: 200, y: 200},
+      {x: 190, y: 200},
+      {x: 180, y: 200},
+      {x: 170, y: 200},
+      {x: 160, y: 200}
+    ]
+
+    let score = 0;
+    // True if changing direction
+    let changing_direction = false;
+    // Horizontal velocity
+    let food_x;
+    let food_y;
+    let dx = 10;
+    // Vertical velocity
+    let dy = 0;
+    
+    
+    // Get the canvas element
+    const uloboard = document.getElementById("uloboard");
+    // Return a two dimensional drawing context
+    const uloboard_ctx = uloboard.getContext("2d");
+    // Start game
+    main();
+
+    gen_food();
+
+    document.addEventListener("keydown", change_direction);
+    
+    // main function called repeatedly to keep the game running
+    function main() {
+
+        if (has_game_ended()) return;
+
+        changing_direction = false;
+        setTimeout(function onTick() {
+        clear_board();
+        drawFood();
+        move_ulo();
+        drawUlo();
+        // Repeat
+        main();
+      }, 100)
+    }
+    
+    // draw a border around the canvas
+    function clear_board() {
+      //  Select the colour to fill the drawing
+      uloboard_ctx.fillStyle = board_background;
+      //  Select the colour for the border of the canvas
+      uloboard_ctx.strokestyle = board_border;
+      // Draw a "filled" rectangle to cover the entire canvas
+      uloboard_ctx.fillRect(0, 0, uloboard.width, uloboard.height);
+      // Draw a "border" around the entire canvas
+      uloboard_ctx.strokeRect(0, 0, uloboard.width, uloboard.height);
+    }
+    
+    // Draw the snake on the canvas
+    function drawUlo() {
+      // Draw each part
+      ulo.forEach(drawUloPart)
+    }
+
+    function drawFood() {
+      uloboard_ctx.fillStyle = 'lightgreen';
+      uloboard_ctx.strokestyle = 'darkgreen';
+      uloboard_ctx.fillRect(food_x, food_y, 10, 10);
+      uloboard_ctx.strokeRect(food_x, food_y, 10, 10);
+    }
+    
+    // Draw one snake part
+    function drawUloPart(uloPart) {
+
+      // Set the colour of the snake part
+      uloboard_ctx.fillStyle = ulo_col;
+      // Set the border colour of the snake part
+      uloboard_ctx.strokestyle = ulo_border;
+      // Draw a "filled" rectangle to represent the snake part at the coordinates
+      // the part is located
+      uloboard_ctx.fillRect(uloPart.x, uloPart.y, 10, 10);
+      // Draw a border around the snake part
+      uloboard_ctx.strokeRect(uloPart.x, uloPart.y, 10, 10);
+    }
+
+    function has_game_ended() {
+      for (let i = 4; i < ulo.length; i++) {
+        if (ulo[i].x === ulo[0].x && ulo[i].y === ulo[0].y) return true
+      }
+      const hitLeftWall = ulo[0].x < 0;
+      const hitRightWall = ulo[0].x > uloboard.width - 10;
+      const hitToptWall = ulo[0].y < 0;
+      const hitBottomWall = ulo[0].y > uloboard.height - 10;
+      return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall
+    }
+
+    function random_food(min, max) {
+      return Math.round((Math.random() * (max-min) + min) / 10) * 10;
+    }
+
+    function gen_food() {
+      // Generate a random number the food x-coordinate
+      food_x = random_food(0, uloboard.width - 10);
+      // Generate a random number for the food y-coordinate
+      food_y = random_food(0, uloboard.height - 10);
+      // if the new food location is where the snake currently is, generate a new food location
+      ulo.forEach(function has_ulo_eaten_food(part) {
+        const has_eaten = part.x == food_x && part.y == food_y;
+        if (has_eaten) gen_food();
+      });
+    }
+
+    function change_direction(event) {
+      const LEFT_KEY = 37;
+      const RIGHT_KEY = 39;
+      const UP_KEY = 38;
+      const DOWN_KEY = 40;
+      
+    // Prevent the snake from reversing
+    
+      if (changing_direction) return;
+      changing_direction = true;
+      const keyPressed = event.keyCode;
+      const goingUp = dy === -10;
+      const goingDown = dy === 10;
+      const goingRight = dx === 10;
+      const goingLeft = dx === -10;
+      if (keyPressed === LEFT_KEY && !goingRight) {
+        dx = -10;
+        dy = 0;
+      }
+      if (keyPressed === UP_KEY && !goingDown) {
+        dx = 0;
+        dy = -10;
+      }
+      if (keyPressed === RIGHT_KEY && !goingLeft) {
+        dx = 10;
+        dy = 0;
+      }
+      if (keyPressed === DOWN_KEY && !goingUp) {
+        dx = 0;
+        dy = 10;
+      }
+    }
+
+    function move_ulo() {
+      // Create the new Snake's head
+      const head = {x: ulo[0].x + dx, y: ulo[0].y + dy};
+      // Add the new head to the beginning of snake body
+      ulo.unshift(head);
+      const has_eaten_food = ulo[0].x === food_x && ulo[0].y === food_y;
+      if (has_eaten_food) {
+        // Increase score
+        score += 10;
+        // Display score on screen
+        document.getElementById('score').innerHTML = score;
+        // Generate new food location
+        gen_food();
+      } else {
+        // Remove the last part of snake body
+        ulo.pop();
+      }
+    }
+    
+  </script>
+</html>
